@@ -5,13 +5,13 @@ import { MapPin, Clock, ArrowUp, ArrowDown, Trash2, Save, LogOut, Navigation, Pl
 // ★★★ 最速完成のための設定エリア ★★★
 // =====================================================================
 // 1. Google Maps APIキー
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+const GOOGLE_MAPS_API_KEY = "AIzaSyBUrrjAvxg8anEmnW5TkBYdUCkmnFXObTI";
 
 // 2. GASのウェブアプリURL (https://script.google.com/.../exec)
 const GAS_URL = import.meta.env.DEV && import.meta.env.VITE_GAS_PROXY_URL
   ? import.meta.env.VITE_GAS_PROXY_URL
-  : import.meta.env.VITE_GAS_URL || "";
-const ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN || "admin";
+  : "https://script.google.com/macros/s/AKfycbynfVvfLFXYRZKQDsINj_JQyYRhotigKPvTtThZqidlRXZaRSsduzzrUcpBPzpvLPEZcA/exec";
+const ADMIN_PIN = "admin";
 // =====================================================================
 
 export default function App() {
