@@ -61,3 +61,4 @@
 - GitHub Pages公開用に、ViteのbaseをGitHub Actions上のリポジトリ名から自動設定するよう修正。
 - GitHub PagesへデプロイするGitHub Actions workflowを追加。
 - READMEにGitHub Pages公開手順と必要なRepository secretsを追記。
+- GitHub ActionsでSecretsとVariablesのどちらからでも本番環境変数を読めるよう修正し、必須値が未設定ならビルドを失敗させるチェックを追加。

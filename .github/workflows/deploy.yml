@@ -30,12 +30,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check production environment
+        run: |
+          test -n "$VITE_GOOGLE_MAPS_API_KEY"
+          test -n "$VITE_GAS_URL"
+        env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY || vars.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GAS_URL: ${{ secrets.VITE_GAS_URL || vars.VITE_GAS_URL }}
+
       - name: Build
         run: npm run build
         env:
-          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
-          VITE_GAS_URL: ${{ secrets.VITE_GAS_URL }}
-          VITE_ADMIN_PIN: ${{ secrets.VITE_ADMIN_PIN }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY || vars.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GAS_URL: ${{ secrets.VITE_GAS_URL || vars.VITE_GAS_URL }}
+          VITE_ADMIN_PIN: ${{ secrets.VITE_ADMIN_PIN || vars.VITE_ADMIN_PIN }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

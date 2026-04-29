@@ -53,7 +53,7 @@ npm run build
 
 GitHub の repository `Settings` → `Pages` で、`Build and deployment` の `Source` を `GitHub Actions` にします。
 
-Repository secrets に次を設定します。
+Repository secrets または Repository variables に次を設定します。
 
 ```text
 VITE_GOOGLE_MAPS_API_KEY
@@ -62,6 +62,8 @@ VITE_ADMIN_PIN
 ```
 
 `main` ブランチへ push すると、`.github/workflows/deploy.yml` が `npm run build` を実行し、`dist` を GitHub Pages へ公開します。
+
+`VITE_GOOGLE_MAPS_API_KEY` と `VITE_GAS_URL` が未設定の場合、GitHub Actions のビルドを失敗させて設定漏れが分かるようにしています。
 
 Google Maps API キーには、公開後の GitHub Pages URL を HTTP リファラー制限として追加してください。
 
