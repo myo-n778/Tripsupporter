@@ -67,7 +67,7 @@ export default function App() {
   const destinations = currentDayData?.destinations || [];
   const visibleDestinations = destinations.filter(dest => !hiddenPlaceIds.includes(dest.id));
   const routeColors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#be123c', '#4f46e5'];
-  const kyotoNaraBounds = { south: 34.45, west: 135.55, north: 35.35, east: 136.10 };
+  const kyotoNaraBounds = { south: 33.75, west: 134.80, north: 35.85, east: 136.35 };
 
   // --- Google Maps スクリプトのロード ---
   useEffect(() => {
@@ -182,7 +182,7 @@ export default function App() {
       }
 
       placesServiceRef.current.findPlaceFromQuery({
-        query: restrictToKyotoNara ? `${dest.name} 京都 奈良 日本` : dest.name,
+        query: dest.name,
         fields: ['name', 'geometry', 'formatted_address']
       }, (results, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results?.length === 1 && results[0]?.geometry?.location) {
@@ -503,8 +503,8 @@ export default function App() {
     }
 
     const previousPlace = destinations[destinations.length - 1].name;
-    const routeOrigin = restrictToKyotoNara ? `${previousPlace} 京都 奈良 日本` : previousPlace;
-    const routeDestination = restrictToKyotoNara ? `${newPlaceName} 京都 奈良 日本` : newPlaceName;
+    const routeOrigin = previousPlace;
+    const routeDestination = newPlaceName;
     const travelMode = newTravelMode === 'WALKING'
       ? window.google.maps.TravelMode.WALKING
       : window.google.maps.TravelMode.TRANSIT;
@@ -632,7 +632,7 @@ export default function App() {
     }
 
     const request = {
-      input: restrictToKyotoNara ? `${input} 京都 奈良` : input,
+      input: input.trim(),
       componentRestrictions: { country: 'jp' },
       language: 'ja',
     };
