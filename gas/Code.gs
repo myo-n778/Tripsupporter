@@ -148,56 +148,41 @@ function writeTimeline_() {
       }
 
       var schedule = daySchedules[groupNumber] || [];
-      var pendingPointItems = [];
+      var previousItem = null;
+      var lastUsedEndIndex = 0;
       schedule.forEach(function(item) {
-        var startIndex = Math.max(0, Math.floor((item.arrivalMinute - range.start) / TIMELINE_STEP_MINUTES));
-        var endIndex = Math.min(slots.length, Math.ceil((item.departureMinute - range.start) / TIMELINE_STEP_MINUTES));
-        var isPointStop = item.departureMinute <= item.arrivalMinute;
-
-        if (isPointStop) {
-          pendingPointItems.push(item);
-          return;
+        if (previousItem && item.travelTime > 0) {
+          var travelStartIndex = Math.max(
+            lastUsedEndIndex,
+            Math.floor((previousItem.departureMinute - range.start) / TIMELINE_STEP_MINUTES)
+          );
+          var travelEndIndex = Math.min(
+            slots.length,
+            Math.ceil((item.arrivalMinute - range.start) / TIMELINE_STEP_MINUTES)
+          );
+          var travelLabel = previousItem.name + " → " + item.name;
+          var travelEnd = addTimelineBar_(row, rowNumber, barRanges, travelStartIndex, travelEndIndex, travelLabel, "travel", slots.length);
+          if (travelEnd !== null) {
+            lastUsedEndIndex = travelEnd;
+          }
         }
 
-        if (endIndex <= startIndex) {
-          endIndex = Math.min(slots.length, startIndex + 1);
+        if (item.departureMinute > item.arrivalMinute) {
+          var stayStartIndex = Math.max(
+            lastUsedEndIndex,
+            Math.floor((item.arrivalMinute - range.start) / TIMELINE_STEP_MINUTES)
+          );
+          var stayEndIndex = Math.min(
+            slots.length,
+            Math.ceil((item.departureMinute - range.start) / TIMELINE_STEP_MINUTES)
+          );
+          var stayEnd = addTimelineBar_(row, rowNumber, barRanges, stayStartIndex, stayEndIndex, item.name, getTimelineItemType_(item.name), slots.length);
+          if (stayEnd !== null) {
+            lastUsedEndIndex = stayEnd;
+          }
         }
 
-        if (endIndex <= startIndex || startIndex >= slots.length) {
-          return;
-        }
-
-        var startColumn = startIndex + 2;
-        var columnSpan = endIndex - startIndex;
-        var labelNames = pendingPointItems.map(function(pointItem) {
-          return pointItem.name;
-        }).concat([item.name]);
-        pendingPointItems = [];
-        row[startColumn - 1] = labelNames.join(" → ");
-        barRanges.push({
-          row: rowNumber,
-          column: startColumn,
-          columns: columnSpan,
-          type: getTimelineItemType_(item.name),
-        });
-      });
-
-      pendingPointItems.forEach(function(pointItem) {
-        var pointIndex = Math.max(0, Math.floor((pointItem.arrivalMinute - range.start) / TIMELINE_STEP_MINUTES));
-        if (pointIndex >= slots.length) {
-          return;
-        }
-
-        var pointColumn = pointIndex + 2;
-        row[pointColumn - 1] = row[pointColumn - 1]
-          ? row[pointColumn - 1] + " → " + pointItem.name
-          : pointItem.name;
-        barRanges.push({
-          row: rowNumber,
-          column: pointColumn,
-          columns: 1,
-          type: getTimelineItemType_(pointItem.name),
-        });
+        previousItem = item;
       });
 
       rows.push(row);
@@ -338,6 +323,31 @@ function buildTimeSlots_(startMinute, endMinute) {
   return slots;
 }
 
+function addTimelineBar_(row, rowNumber, barRanges, startIndex, endIndex, label, type, slotsLength) {
+  var safeStartIndex = Math.max(0, startIndex);
+  var safeEndIndex = Math.min(slotsLength, endIndex);
+
+  if (safeEndIndex <= safeStartIndex) {
+    safeEndIndex = Math.min(slotsLength, safeStartIndex + 1);
+  }
+
+  if (safeEndIndex <= safeStartIndex || safeStartIndex >= slotsLength) {
+    return null;
+  }
+
+  var startColumn = safeStartIndex + 2;
+  var columnSpan = safeEndIndex - safeStartIndex;
+  row[startColumn - 1] = label;
+  barRanges.push({
+    row: rowNumber,
+    column: startColumn,
+    columns: columnSpan,
+    type: type,
+  });
+
+  return safeEndIndex;
+}
+
 function formatTimelineSheet_(sheet, rowCount, barRanges, headerRows, dayTitleRows) {
   var maxColumns = sheet.getLastColumn();
   sheet.setFrozenRows(3);
@@ -367,11 +377,17 @@ function formatTimelineSheet_(sheet, rowCount, barRanges, headerRows, dayTitleRo
       range.mergeAcross();
     }
     range
-      .setBackground(bar.type === "meal" ? "#f4b183" : "#c6e0b4")
+      .setBackground(getTimelineBarColor_(bar.type))
       .setFontWeight("bold")
       .setBorder(true, true, true, true, false, false, "#6b7280", SpreadsheetApp.BorderStyle.SOLID)
       .setHorizontalAlignment("center");
   });
+}
+
+function getTimelineBarColor_(type) {
+  if (type === "meal") return "#f4b183";
+  if (type === "travel") return "#bdd7ee";
+  return "#c6e0b4";
 }
 
 function getTimelineItemType_(name) {
