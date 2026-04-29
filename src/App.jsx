@@ -741,7 +741,7 @@ export default function App() {
               <label className="block text-sm font-medium text-slate-700 mb-1">班番号</label>
               <select className="w-full p-3 border border-slate-300 rounded-lg outline-none" value={groupInfo.number} onChange={(e) => setGroupInfo({...groupInfo, number: e.target.value})} required>
                 <option value="">選択してください</option>
-                {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(groupNumber => (
+                {Array.from({ length: 14 }, (_, i) => String(i + 1).padStart(2, '0')).map(groupNumber => (
                   <option key={groupNumber} value={groupNumber}>{groupNumber}班</option>
                 ))}
                 <option disabled>──────────</option>

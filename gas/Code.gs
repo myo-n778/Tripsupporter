@@ -1,7 +1,7 @@
 var SPREADSHEET_ID = "12ZXPvqk5-gtos9sOZREPi6wPoPMiFxss-lkLonKKMsQ";
 var TARGET_SHEET_GID = 49856829;
 var TIMELINE_SHEET_GID = 1348031489;
-var GROUP_NUMBERS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+var GROUP_NUMBERS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14"];
 var TIMELINE_STEP_MINUTES = 15;
 var TIMELINE_DEFAULT_START = "08:00";
 var TIMELINE_DEFAULT_END = "17:30";
