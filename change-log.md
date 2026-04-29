@@ -62,3 +62,6 @@
 - GitHub PagesへデプロイするGitHub Actions workflowを追加。
 - READMEにGitHub Pages公開手順と必要なRepository secretsを追記。
 - GitHub ActionsでSecretsとVariablesのどちらからでも本番環境変数を読めるよう修正し、必須値が未設定ならビルドを失敗させるチェックを追加。
+- GitHub Pages公開用に、Google Maps APIキー・GAS URL・管理者PINをアプリ設定へ戻し、環境変数なしでも動作するよう修正。
+- 京都・奈良限定モードの検索範囲を京都府・奈良県全体へ広げ、検索語に余計な「京都 奈良」を付加しないよう修正。
+- タイムラインで滞在時間0分の通過地点が次の地点に上書きされないよう、同じ時刻枠では `通過地点 → 滞在地点` として併記するよう修正。

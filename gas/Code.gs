@@ -148,9 +148,16 @@ function writeTimeline_() {
       }
 
       var schedule = daySchedules[groupNumber] || [];
+      var pendingPointItems = [];
       schedule.forEach(function(item) {
         var startIndex = Math.max(0, Math.floor((item.arrivalMinute - range.start) / TIMELINE_STEP_MINUTES));
         var endIndex = Math.min(slots.length, Math.ceil((item.departureMinute - range.start) / TIMELINE_STEP_MINUTES));
+        var isPointStop = item.departureMinute <= item.arrivalMinute;
+
+        if (isPointStop) {
+          pendingPointItems.push(item);
+          return;
+        }
 
         if (endIndex <= startIndex) {
           endIndex = Math.min(slots.length, startIndex + 1);
@@ -162,12 +169,34 @@ function writeTimeline_() {
 
         var startColumn = startIndex + 2;
         var columnSpan = endIndex - startIndex;
-        row[startColumn - 1] = item.name;
+        var labelNames = pendingPointItems.map(function(pointItem) {
+          return pointItem.name;
+        }).concat([item.name]);
+        pendingPointItems = [];
+        row[startColumn - 1] = labelNames.join(" → ");
         barRanges.push({
           row: rowNumber,
           column: startColumn,
           columns: columnSpan,
           type: getTimelineItemType_(item.name),
+        });
+      });
+
+      pendingPointItems.forEach(function(pointItem) {
+        var pointIndex = Math.max(0, Math.floor((pointItem.arrivalMinute - range.start) / TIMELINE_STEP_MINUTES));
+        if (pointIndex >= slots.length) {
+          return;
+        }
+
+        var pointColumn = pointIndex + 2;
+        row[pointColumn - 1] = row[pointColumn - 1]
+          ? row[pointColumn - 1] + " → " + pointItem.name
+          : pointItem.name;
+        barRanges.push({
+          row: rowNumber,
+          column: pointColumn,
+          columns: 1,
+          type: getTimelineItemType_(pointItem.name),
         });
       });
 
