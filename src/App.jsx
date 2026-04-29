@@ -10,7 +10,7 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyBUrrjAvxg8anEmnW5TkBYdUCkmnFXObTI";
 // 2. GASのウェブアプリURL (https://script.google.com/.../exec)
 const GAS_URL = import.meta.env.DEV && import.meta.env.VITE_GAS_PROXY_URL
   ? import.meta.env.VITE_GAS_PROXY_URL
-  : "https://script.google.com/macros/s/AKfycbynfVvfLFXYRZKQDsINj_JQyYRhotigKPvTtThZqidlRXZaRSsduzzrUcpBPzpvLPEZcA/exec";
+  : "https://script.google.com/macros/s/AKfycbxNRnmdM3TvGg84ktuVlfNu05-ZecD1w5nSbybnKe3UzkNo9AMkkSdnSCx1TLedaSh8aQ/exec";
 const ADMIN_PIN = "admin";
 // =====================================================================
 
