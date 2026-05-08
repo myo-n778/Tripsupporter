@@ -29,10 +29,12 @@ function getSheetByGid_(gid) {
 
 function doPost(e) {
   var sheet = getTargetSheet_();
+  ensureDataSheetHeader_(sheet);
   var params = JSON.parse(e.postData.contents);
   var groupNo = params.groupNumber;
   var pin = params.pin;
   var data = params.data || [];
+  var savedAt = new Date();
 
   var values = sheet.getDataRange().getValues();
   var rowToUpdate = -1;
@@ -47,14 +49,22 @@ function doPost(e) {
   if (rowToUpdate > 0) {
     sheet.getRange(rowToUpdate, 2).setValue(pin);
     sheet.getRange(rowToUpdate, 3).setValue(JSON.stringify(data));
-    sheet.getRange(rowToUpdate, 4).setValue(new Date());
+    if (!sheet.getRange(rowToUpdate, 4).getValue()) {
+      sheet.getRange(rowToUpdate, 4).setValue(savedAt);
+    }
+    sheet.getRange(rowToUpdate, 5).setValue(savedAt);
   } else {
-    sheet.appendRow([groupNo, pin, JSON.stringify(data), new Date()]);
+    sheet.appendRow([groupNo, pin, JSON.stringify(data), savedAt, savedAt]);
   }
 
   return ContentService
     .createTextOutput(JSON.stringify({ status: "success" }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function ensureDataSheetHeader_(sheet) {
+  var headers = ["班番号", "PIN", "データ", "入力日時", "更新日時"];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 }
 
 function doGet(e) {
