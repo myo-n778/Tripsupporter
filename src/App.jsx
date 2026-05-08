@@ -25,7 +25,6 @@ export default function App() {
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [placePhotoUrls, setPlacePhotoUrls] = useState({});
   const [expandedPhoto, setExpandedPhoto] = useState(null);
-  const [hiddenPlaceIds, setHiddenPlaceIds] = useState([]);
   const [placeSuggestions, setPlaceSuggestions] = useState([]);
   const [newPlaceId, setNewPlaceId] = useState('');
   const [restrictToKyotoNara, setRestrictToKyotoNara] = useState(true);
@@ -65,7 +64,7 @@ export default function App() {
   const currentDayData = daysData.find(d => d.id === currentDayId);
   const startTime = currentDayData?.startTime || '09:00';
   const destinations = currentDayData?.destinations || [];
-  const visibleDestinations = destinations.filter(dest => !hiddenPlaceIds.includes(dest.id));
+  const visibleDestinations = destinations.filter(dest => dest.mapVisible !== false);
   const routeColors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#be123c', '#4f46e5'];
   const kyotoNaraBounds = { south: 33.75, west: 134.80, north: 35.85, east: 136.35 };
 
@@ -302,7 +301,7 @@ export default function App() {
       circlesRef.current = [];
       ringMarkersRef.current = [];
     };
-  }, [destinations, hiddenPlaceIds, isMapLoaded, restrictToKyotoNara]);
+  }, [destinations, isMapLoaded, restrictToKyotoNara]);
 
   // --- 地点写真プレビューの取得 ---
   useEffect(() => {
@@ -585,6 +584,7 @@ export default function App() {
       travelTime: isFirst ? 0 : Number(newTravelTime),
       travelMode: isFirst ? 'NONE' : newTravelMode,
       placeId: newPlaceId,
+      mapVisible: true,
     };
     updateCurrentDay({ destinations: [...destinations, newPlace] });
     setNewPlaceName('');
@@ -619,10 +619,14 @@ export default function App() {
 
   const getRouteColor = (segmentIndex) => routeColors[segmentIndex % routeColors.length];
 
-  const isPlaceVisibleOnMap = (id) => !hiddenPlaceIds.includes(id);
+  const isPlaceVisibleOnMap = (dest) => dest.mapVisible !== false;
 
   const togglePlaceVisibility = (id) => {
-    setHiddenPlaceIds(prev => prev.includes(id) ? prev.filter(hiddenId => hiddenId !== id) : [...prev, id]);
+    updateCurrentDay({
+      destinations: destinations.map(dest => (
+        dest.id === id ? { ...dest, mapVisible: dest.mapVisible === false } : dest
+      ))
+    });
   };
 
   const fetchPlaceSuggestions = (input, setter, options = {}) => {
@@ -1035,7 +1039,7 @@ export default function App() {
                         <label className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer select-none">
                           <input
                             type="checkbox"
-                            checked={isPlaceVisibleOnMap(dest.id)}
+                            checked={isPlaceVisibleOnMap(dest)}
                             onChange={() => togglePlaceVisibility(dest.id)}
                             className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600"
                           />
