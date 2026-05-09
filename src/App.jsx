@@ -609,6 +609,15 @@ export default function App() {
     else updateCurrentDay({ destinations: destinations.filter(d => d.id !== id) });
   };
 
+  const updateDestinationStayTime = (id, value) => {
+    const nextStayTime = Math.max(0, Number(value || 0));
+    updateCurrentDay({
+      destinations: destinations.map(dest => (
+        dest.id === id ? { ...dest, stayTime: nextStayTime } : dest
+      ))
+    });
+  };
+
   const getTravelModeIcon = (mode) => {
     switch(mode) { case 'WALKING': return <Footprints size={14} />; case 'BUS': return <Bus size={14} />; case 'TRAIN': return <Train size={14} />; default: return <Navigation size={14} />; }
   };
@@ -1035,7 +1044,19 @@ export default function App() {
                           {dest.isStart && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">出発地</span>}
                           {dest.name}
                         </h3>
-                        {!dest.isStart && <p className="text-sm text-slate-500 mt-1">滞在: {dest.stayTime}分</p>}
+                        {!dest.isStart && (
+                          <label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-500">
+                            <span>滞在</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={dest.stayTime}
+                              onChange={(e) => updateDestinationStayTime(dest.id, e.target.value)}
+                              className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            />
+                            <span>分</span>
+                          </label>
+                        )}
                         <label className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer select-none">
                           <input
                             type="checkbox"
