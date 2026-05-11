@@ -42,6 +42,9 @@ export default function App() {
   const markersRef = useRef([]);
   const circlesRef = useRef([]);
   const ringMarkersRef = useRef([]);
+  const previewMarkerRef = useRef(null);
+  const previewCircleRef = useRef(null);
+  const previewRingMarkerRef = useRef(null);
 
   // --- 生徒用ステート ---
   const initialDaysData = [
@@ -115,6 +118,9 @@ export default function App() {
       markersRef.current.forEach(marker => marker.setMap(null));
       circlesRef.current.forEach(circle => circle.setMap(null));
       ringMarkersRef.current.forEach(marker => marker.setMap(null));
+      previewMarkerRef.current?.setMap(null);
+      previewCircleRef.current?.setMap(null);
+      previewRingMarkerRef.current?.setMap(null);
       mapInstance.current = null;
       directionsServiceRef.current = null;
       geocoderRef.current = null;
@@ -124,6 +130,9 @@ export default function App() {
       markersRef.current = [];
       circlesRef.current = [];
       ringMarkersRef.current = [];
+      previewMarkerRef.current = null;
+      previewCircleRef.current = null;
+      previewRingMarkerRef.current = null;
       return;
     }
 
@@ -302,6 +311,92 @@ export default function App() {
       ringMarkersRef.current = [];
     };
   }, [destinations, isMapLoaded, restrictToKyotoNara]);
+
+  // --- 入力中地点の仮マーカー描画 ---
+  useEffect(() => {
+    if (!isMapLoaded || !mapInstance.current || !geocoderRef.current || !newPlaceId) {
+      previewMarkerRef.current?.setMap(null);
+      previewCircleRef.current?.setMap(null);
+      previewRingMarkerRef.current?.setMap(null);
+      previewMarkerRef.current = null;
+      previewCircleRef.current = null;
+      previewRingMarkerRef.current = null;
+      return;
+    }
+
+    let isCancelled = false;
+    previewMarkerRef.current?.setMap(null);
+    previewCircleRef.current?.setMap(null);
+    previewRingMarkerRef.current?.setMap(null);
+    previewMarkerRef.current = null;
+    previewCircleRef.current = null;
+    previewRingMarkerRef.current = null;
+
+    geocoderRef.current.geocode({ placeId: newPlaceId }, (results, status) => {
+      if (isCancelled) return;
+      if (status !== 'OK' || !results?.[0]?.geometry?.location) return;
+
+      const location = results[0].geometry.location;
+      const previewNumber = destinations.length + 1;
+
+      previewMarkerRef.current = new window.google.maps.Marker({
+        map: mapInstance.current,
+        position: location,
+        label: String(previewNumber),
+        title: `${newPlaceName}（登録前）`,
+        zIndex: 100,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 15,
+          fillColor: '#f59e0b',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeOpacity: 1,
+          strokeWeight: 3,
+        },
+      });
+      previewRingMarkerRef.current = new window.google.maps.Marker({
+        map: mapInstance.current,
+        position: location,
+        clickable: false,
+        zIndex: 90,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 26,
+          fillColor: '#f59e0b',
+          fillOpacity: 0.08,
+          strokeColor: '#d97706',
+          strokeOpacity: 0.95,
+          strokeWeight: 4,
+        },
+      });
+      previewCircleRef.current = new window.google.maps.Circle({
+        map: mapInstance.current,
+        center: location,
+        radius: 160,
+        strokeColor: '#d97706',
+        strokeOpacity: 0.95,
+        strokeWeight: 3,
+        fillColor: '#f59e0b',
+        fillOpacity: 0.12,
+      });
+
+      mapInstance.current.panTo(location);
+      if ((mapInstance.current.getZoom() || 0) < 14) {
+        mapInstance.current.setZoom(14);
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+      previewMarkerRef.current?.setMap(null);
+      previewCircleRef.current?.setMap(null);
+      previewRingMarkerRef.current?.setMap(null);
+      previewMarkerRef.current = null;
+      previewCircleRef.current = null;
+      previewRingMarkerRef.current = null;
+    };
+  }, [newPlaceId, newPlaceName, destinations.length, isMapLoaded]);
 
   // --- 地点写真プレビューの取得 ---
   useEffect(() => {
