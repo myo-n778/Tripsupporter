@@ -618,6 +618,23 @@ export default function App() {
     });
   };
 
+  const updateDestinationTravelTime = (id, value) => {
+    const nextTravelTime = Math.max(0, Number(value || 0));
+    updateCurrentDay({
+      destinations: destinations.map(dest => (
+        dest.id === id ? { ...dest, travelTime: nextTravelTime } : dest
+      ))
+    });
+  };
+
+  const updateDestinationTravelMode = (id, mode) => {
+    updateCurrentDay({
+      destinations: destinations.map(dest => (
+        dest.id === id ? { ...dest, travelMode: mode } : dest
+      ))
+    });
+  };
+
   const getTravelModeIcon = (mode) => {
     switch(mode) { case 'WALKING': return <Footprints size={14} />; case 'BUS': return <Bus size={14} />; case 'TRAIN': return <Train size={14} />; default: return <Navigation size={14} />; }
   };
@@ -1045,7 +1062,29 @@ export default function App() {
                           {dest.name}
                         </h3>
                         {!dest.isStart && (
-                          <label className="mt-2 inline-flex items-center gap-2 text-sm text-slate-500">
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                            <span>移動</span>
+                            <select
+                              value={dest.travelMode || 'TRAIN'}
+                              onChange={(e) => updateDestinationTravelMode(dest.id, e.target.value)}
+                              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            >
+                              <option value="TRAIN">電車</option>
+                              <option value="BUS">バス</option>
+                              <option value="WALKING">徒歩</option>
+                            </select>
+                            <input
+                              type="number"
+                              min="0"
+                              value={dest.travelTime}
+                              onChange={(e) => updateDestinationTravelTime(dest.id, e.target.value)}
+                              className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            />
+                            <span>分</span>
+                          </div>
+                        )}
+                        {!dest.isStart && (
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                             <span>滞在</span>
                             <input
                               type="number"
@@ -1055,7 +1094,7 @@ export default function App() {
                               className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             />
                             <span>分</span>
-                          </label>
+                          </div>
                         )}
                         <label className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer select-none">
                           <input
