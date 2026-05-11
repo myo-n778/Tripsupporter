@@ -1224,13 +1224,30 @@ export default function App() {
                       </div>
                     </div>
                     {index < destinations.length - 1 ? (
-                      <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between items-start text-sm">
+                      <div className="mt-3 pt-3 border-t border-slate-200 flex flex-col gap-2 text-sm sm:flex-row sm:justify-between sm:items-start">
                         <span className="font-medium text-slate-600 mt-1">出発 {dest.departureTime}</span>
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="flex items-center gap-1 text-slate-600 bg-white px-3 py-1.5 rounded-full border border-slate-300 shadow-sm font-medium">
-                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getRouteColor(index) }}></span>
-                            {getTravelModeIcon(destinations[index+1].travelMode)} {getTravelModeName(destinations[index+1].travelMode)} {destinations[index+1].travelTime}分
-                          </span>
+                        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-600 shadow-sm">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getRouteColor(index) }}></span>
+                          {getTravelModeIcon(destinations[index + 1].travelMode)}
+                          <select
+                            value={destinations[index + 1].travelMode || 'TRAIN'}
+                            onChange={(e) => updateDestinationTravelMode(destinations[index + 1].id, e.target.value)}
+                            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            aria-label={`${dest.name}から${destinations[index + 1].name}への移動手段`}
+                          >
+                            <option value="TRAIN">電車</option>
+                            <option value="BUS">バス</option>
+                            <option value="WALKING">徒歩</option>
+                          </select>
+                          <input
+                            type="number"
+                            min="0"
+                            value={destinations[index + 1].travelTime}
+                            onChange={(e) => updateDestinationTravelTime(destinations[index + 1].id, e.target.value)}
+                            className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            aria-label={`${dest.name}から${destinations[index + 1].name}への移動時間`}
+                          />
+                          <span>分</span>
                         </div>
                       </div>
                     ) : (
