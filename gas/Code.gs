@@ -186,7 +186,7 @@ function writeTimeline_() {
             slots.length,
             Math.ceil((item.departureMinute - range.start) / TIMELINE_STEP_MINUTES)
           );
-          var stayEnd = addTimelineBar_(row, rowNumber, barRanges, stayStartIndex, stayEndIndex, item.name, getTimelineItemType_(item.name), slots.length);
+          var stayEnd = addTimelineBar_(row, rowNumber, barRanges, stayStartIndex, stayEndIndex, item.name, getTimelineItemType_(item), slots.length);
           if (stayEnd !== null) {
             lastUsedEndIndex = stayEnd;
           }
@@ -290,6 +290,7 @@ function buildSchedule_(dayData) {
       stayTime: stayTime,
       arrivalMinute: arrivalMinute,
       departureMinute: departureMinute,
+      isMeal: dest.isMeal === true,
       isStart: isStart
     };
   });
@@ -395,13 +396,14 @@ function formatTimelineSheet_(sheet, rowCount, barRanges, headerRows, dayTitleRo
 }
 
 function getTimelineBarColor_(type) {
-  if (type === "meal") return "#f4b183";
+  if (type === "meal") return "#fde68a";
   if (type === "travel") return "#bdd7ee";
   return "#c6e0b4";
 }
 
-function getTimelineItemType_(name) {
-  return /昼食|ランチ|食事|カフェ|喫茶|ごはん|ご飯|弁当/.test(String(name || "")) ? "meal" : "place";
+function getTimelineItemType_(item) {
+  if (item && item.isMeal === true) return "meal";
+  return /昼食|ランチ|食事|カフェ|喫茶|ごはん|ご飯|弁当/.test(String((item && item.name) || "")) ? "meal" : "place";
 }
 
 function padRows_(rows) {

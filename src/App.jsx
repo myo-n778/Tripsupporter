@@ -63,6 +63,7 @@ export default function App() {
   const [newStayTime, setNewStayTime] = useState(60);
   const [newTravelTime, setNewTravelTime] = useState(15);
   const [newTravelMode, setNewTravelMode] = useState('TRAIN');
+  const [newIsMeal, setNewIsMeal] = useState(false);
 
   const currentDayData = daysData.find(d => d.id === currentDayId);
   const startTime = currentDayData?.startTime || '09:00';
@@ -680,10 +681,12 @@ export default function App() {
       travelMode: isFirst ? 'NONE' : newTravelMode,
       placeId: newPlaceId,
       mapVisible: true,
+      isMeal: isFirst ? false : newIsMeal,
     };
     updateCurrentDay({ destinations: [...destinations, newPlace] });
     setNewPlaceName('');
     setNewPlaceId('');
+    setNewIsMeal(false);
   };
 
   const moveDestination = (index, direction) => {
@@ -726,6 +729,14 @@ export default function App() {
     updateCurrentDay({
       destinations: destinations.map(dest => (
         dest.id === id ? { ...dest, travelMode: mode } : dest
+      ))
+    });
+  };
+
+  const toggleDestinationMeal = (id) => {
+    updateCurrentDay({
+      destinations: destinations.map(dest => (
+        dest.id === id ? { ...dest, isMeal: !dest.isMeal } : dest
       ))
     });
   };
@@ -1120,6 +1131,16 @@ export default function App() {
                     </div>
                   </div>
 
+                  <label className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={newIsMeal}
+                      onChange={(e) => setNewIsMeal(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-yellow-500"
+                    />
+                    食事として出力
+                  </label>
+
                   <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg flex justify-between items-center text-sm">
                     <div className="text-blue-800">
                       <span className="font-semibold text-xs text-blue-600 block mb-0.5">到着予想</span>
@@ -1200,6 +1221,17 @@ export default function App() {
                           />
                           地図に表示
                         </label>
+                        {!dest.isStart && (
+                          <label className="mt-2 ml-3 inline-flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={!!dest.isMeal}
+                              onChange={() => toggleDestinationMeal(dest.id)}
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-yellow-500"
+                            />
+                            食事として出力
+                          </label>
+                        )}
                       </div>
                       <div className="flex shrink-0 items-start gap-2">
                         {placePhotoUrls[dest.name] && (
