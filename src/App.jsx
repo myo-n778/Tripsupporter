@@ -20,6 +20,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isExportingTimeline, setIsExportingTimeline] = useState(false);
+  const [savingAdminGroup, setSavingAdminGroup] = useState(null);
   const [groupInfo, setGroupInfo] = useState({ number: '', pin: '' });
   const [messageBox, setMessageBox] = useState(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
@@ -453,10 +454,10 @@ export default function App() {
 
           // 管理者用に全データをセット
           const formattedAdminData = allData.map(item => ({
-            groupNumber: parseInt(item.groupNumber),
+            groupNumber: String(item.groupNumber).padStart(2, '0'),
             pin: item.pin || '',
             daysData: item.data
-          })).sort((a, b) => a.groupNumber - b.groupNumber);
+          })).sort((a, b) => Number(a.groupNumber) - Number(b.groupNumber));
 
           setAllGroupsData(formattedAdminData);
           setIsLoggedIn(true);
@@ -499,15 +500,69 @@ export default function App() {
       const response = await fetch(GAS_URL);
       const allData = await response.json();
       const formattedAdminData = allData.map(item => ({
-        groupNumber: parseInt(item.groupNumber),
+        groupNumber: String(item.groupNumber).padStart(2, '0'),
         pin: item.pin || '',
         daysData: item.data
-      })).sort((a, b) => a.groupNumber - b.groupNumber);
+      })).sort((a, b) => Number(a.groupNumber) - Number(b.groupNumber));
 
       setAllGroupsData(formattedAdminData);
     } catch (error) {
       setMessageBox({ title: "エラー", content: "データの最新化に失敗しました。" });
     }
+  };
+
+  const updateAdminDay = (groupNumber, dayId, updater) => {
+    setAllGroupsData(groups => groups.map(group => {
+      if (group.groupNumber !== groupNumber) return group;
+
+      const existingDays = group.daysData?.length ? group.daysData : initialDaysData;
+      const nextDays = existingDays.map(day => (
+        Number(day.id) === Number(dayId) ? updater(day) : day
+      ));
+
+      return { ...group, daysData: nextDays };
+    }));
+  };
+
+  const updateAdminDestination = (groupNumber, dayId, destinationIndex, updates) => {
+    updateAdminDay(groupNumber, dayId, day => ({
+      ...day,
+      destinations: (day.destinations || []).map((dest, index) => (
+        index === destinationIndex ? { ...dest, ...updates } : dest
+      ))
+    }));
+  };
+
+  const saveAdminGroup = async (group) => {
+    if (!GAS_URL || savingAdminGroup) return;
+
+    setSavingAdminGroup(group.groupNumber);
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({
+          groupNumber: group.groupNumber,
+          pin: group.pin,
+          data: group.daysData || initialDaysData,
+        })
+      });
+
+      setMessageBox({ title: "保存完了", content: `${group.groupNumber}班のデータを保存しました。` });
+    } catch (error) {
+      console.error("管理者保存エラー:", error);
+      setMessageBox({ title: "エラー", content: `${group.groupNumber}班の保存に失敗しました。` });
+    }
+    setSavingAdminGroup(null);
+  };
+
+  const openGroupAsStudentView = (group) => {
+    setGroupInfo({ number: group.groupNumber, pin: group.pin || '' });
+    setDaysData(group.daysData?.length ? group.daysData : initialDaysData);
+    setCurrentDayId(adminViewDay);
+    setIsAdminMode(false);
   };
 
   const exportTimelineToSheet = async () => {
@@ -955,7 +1010,36 @@ export default function App() {
                       <h2 className="font-bold text-blue-900 text-lg">{group.groupNumber}班</h2>
                       <p className="text-xs text-blue-700 mt-1">PIN: <span className="font-mono font-semibold">{group.pin || '未設定'}</span></p>
                     </div>
-                    {dests.length > 0 && <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-medium">出発 {dayData.startTime}</span>}
+                    <div className="flex flex-col items-end gap-2">
+                      {dests.length > 0 && (
+                        <label className="flex items-center gap-1 text-xs text-blue-800 font-medium">
+                          出発
+                          <input
+                            type="time"
+                            value={dayData?.startTime || '09:00'}
+                            onChange={(e) => updateAdminDay(group.groupNumber, adminViewDay, day => ({ ...day, startTime: e.target.value }))}
+                            className="rounded border border-blue-200 bg-white px-1 py-0.5 text-xs text-blue-900 outline-none"
+                          />
+                        </label>
+                      )}
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => openGroupAsStudentView(group)}
+                          className="rounded bg-white px-2 py-1 text-xs font-medium text-blue-700 border border-blue-200 hover:bg-blue-100"
+                        >
+                          班画面表示
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => saveAdminGroup(group)}
+                          disabled={savingAdminGroup === group.groupNumber}
+                          className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:bg-green-400"
+                        >
+                          {savingAdminGroup === group.groupNumber ? '保存中' : '保存'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="p-4 flex-1 overflow-y-auto max-h-[calc(100vh-280px)]">
@@ -966,10 +1050,68 @@ export default function App() {
                         {dests.map((dest, idx) => (
                           <div key={idx} className="relative">
                             <div className={`absolute -left-[21px] top-1.5 w-3 h-3 rounded-full border-2 border-white ${dest.isStart ? 'bg-red-500' : 'bg-blue-500'}`}></div>
-                            <div className="text-xs font-bold text-slate-500 mb-0.5">{dest.isStart ? '出発' : dest.arrivalTime} 〜 {dest.departureTime}</div>
-                            <div className="font-semibold text-slate-800 text-sm">{dest.name}</div>
-                            {idx < dests.length - 1 && dests[idx+1] && (
-                              <div className="mt-2 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded inline-block">↓ {dests[idx+1].travelTime}分</div>
+                            <div className="text-xs font-bold text-slate-500 mb-1">
+                              {dest.isStart ? '出発地' : `${dest.arrivalTime || '--:--'} 〜 ${dest.departureTime || '--:--'}`}
+                            </div>
+                            <input
+                              type="text"
+                              value={dest.name || ''}
+                              onChange={(e) => updateAdminDestination(group.groupNumber, adminViewDay, idx, { name: e.target.value })}
+                              className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            />
+                            {!dest.isStart && (
+                              <div className="mt-2 grid grid-cols-2 gap-2">
+                                <label className="text-[11px] text-slate-500">
+                                  到着
+                                  <input
+                                    type="time"
+                                    value={dest.arrivalTime || ''}
+                                    onChange={(e) => updateAdminDestination(group.groupNumber, adminViewDay, idx, { arrivalTime: e.target.value })}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-1 py-1 text-xs text-slate-800"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-slate-500">
+                                  出発
+                                  <input
+                                    type="time"
+                                    value={dest.departureTime || ''}
+                                    onChange={(e) => updateAdminDestination(group.groupNumber, adminViewDay, idx, { departureTime: e.target.value })}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-1 py-1 text-xs text-slate-800"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-slate-500">
+                                  移動分
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={dest.travelTime ?? 0}
+                                    onChange={(e) => updateAdminDestination(group.groupNumber, adminViewDay, idx, { travelTime: Math.max(0, Number(e.target.value || 0)) })}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-1 py-1 text-xs text-slate-800"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-slate-500">
+                                  滞在分
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={dest.stayTime ?? 0}
+                                    onChange={(e) => updateAdminDestination(group.groupNumber, adminViewDay, idx, { stayTime: Math.max(0, Number(e.target.value || 0)) })}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-1 py-1 text-xs text-slate-800"
+                                  />
+                                </label>
+                                <label className="text-[11px] text-slate-500 col-span-2">
+                                  移動手段
+                                  <select
+                                    value={dest.travelMode || 'TRAIN'}
+                                    onChange={(e) => updateAdminDestination(group.groupNumber, adminViewDay, idx, { travelMode: e.target.value })}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-1 py-1 text-xs text-slate-800"
+                                  >
+                                    <option value="TRAIN">電車</option>
+                                    <option value="BUS">バス</option>
+                                    <option value="WALKING">徒歩</option>
+                                  </select>
+                                </label>
+                              </div>
                             )}
                           </div>
                         ))}
