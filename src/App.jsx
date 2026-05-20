@@ -21,6 +21,7 @@ export default function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExportingTimeline, setIsExportingTimeline] = useState(false);
   const [savingAdminGroup, setSavingAdminGroup] = useState(null);
+  const [isViewingGroupFromAdmin, setIsViewingGroupFromAdmin] = useState(false);
   const [groupInfo, setGroupInfo] = useState({ number: '', pin: '' });
   const [messageBox, setMessageBox] = useState(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
@@ -72,27 +73,6 @@ export default function App() {
   const visibleDestinations = destinations.filter(dest => dest.mapVisible !== false);
   const routeColors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#be123c', '#4f46e5'];
   const kyotoNaraBounds = { south: 33.75, west: 134.80, north: 35.85, east: 136.35 };
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const previewKey = params.get('teacherPreview');
-    if (!previewKey) return;
-
-    try {
-      const rawPreview = window.localStorage.getItem(previewKey);
-      if (!rawPreview) return;
-
-      const preview = JSON.parse(rawPreview);
-      setGroupInfo({ number: preview.groupNumber || '', pin: preview.pin || '' });
-      setDaysData(preview.daysData?.length ? preview.daysData : initialDaysData);
-      setCurrentDayId(preview.dayId || 2);
-      setIsAdminMode(false);
-      setIsLoggedIn(true);
-      window.localStorage.removeItem(previewKey);
-    } catch (error) {
-      console.error("班画面プレビューの読み込みに失敗しました:", error);
-    }
-  }, []);
 
   // --- Google Maps スクリプトのロード ---
   useEffect(() => {
@@ -580,22 +560,16 @@ export default function App() {
   };
 
   const openGroupAsStudentView = (group) => {
-    const previewKey = `trip-supporter-preview-${Date.now()}-${group.groupNumber}`;
-    window.localStorage.setItem(previewKey, JSON.stringify({
-      groupNumber: group.groupNumber,
-      pin: group.pin || '',
-      daysData: group.daysData?.length ? group.daysData : initialDaysData,
-      dayId: adminViewDay,
-    }));
+    setGroupInfo({ number: group.groupNumber, pin: group.pin || '' });
+    setDaysData(group.daysData?.length ? group.daysData : initialDaysData);
+    setCurrentDayId(adminViewDay);
+    setIsViewingGroupFromAdmin(true);
+    setIsAdminMode(false);
+  };
 
-    const previewUrl = `${window.location.origin}${window.location.pathname}?teacherPreview=${encodeURIComponent(previewKey)}`;
-    const opened = window.open(previewUrl, '_blank');
-    if (!opened) {
-      setMessageBox({
-        title: "別ウィンドウを開けませんでした",
-        content: "ブラウザのポップアップブロックを解除して、もう一度「別窓表示」を押してください。"
-      });
-    }
+  const returnToAdminDashboard = () => {
+    setIsViewingGroupFromAdmin(false);
+    setIsAdminMode(true);
   };
 
   const exportTimelineToSheet = async () => {
@@ -1061,7 +1035,7 @@ export default function App() {
                           onClick={() => openGroupAsStudentView(group)}
                           className="rounded bg-white px-2 py-1 text-xs font-medium text-blue-700 border border-blue-200 hover:bg-blue-100"
                         >
-                          別窓表示
+                          班画面表示
                         </button>
                         <button
                           type="button"
@@ -1178,6 +1152,12 @@ export default function App() {
             <h1 className="text-lg font-bold text-slate-800">第 {groupInfo.number} 班 の行程表</h1>
           </div>
           <div className="flex items-center gap-3">
+            {isViewingGroupFromAdmin && (
+              <button onClick={returnToAdminDashboard} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-lg text-sm font-medium">
+                <Users size={16} />
+                <span className="hidden sm:inline">管理ダッシュボードへ戻る</span>
+              </button>
+            )}
             <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-lg text-sm font-medium">
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               <span className="hidden sm:inline">{isSaving ? '保存中...' : 'シートに保存'}</span>
