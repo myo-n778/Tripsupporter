@@ -73,6 +73,27 @@ export default function App() {
   const routeColors = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#be123c', '#4f46e5'];
   const kyotoNaraBounds = { south: 33.75, west: 134.80, north: 35.85, east: 136.35 };
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const previewKey = params.get('teacherPreview');
+    if (!previewKey) return;
+
+    try {
+      const rawPreview = window.localStorage.getItem(previewKey);
+      if (!rawPreview) return;
+
+      const preview = JSON.parse(rawPreview);
+      setGroupInfo({ number: preview.groupNumber || '', pin: preview.pin || '' });
+      setDaysData(preview.daysData?.length ? preview.daysData : initialDaysData);
+      setCurrentDayId(preview.dayId || 2);
+      setIsAdminMode(false);
+      setIsLoggedIn(true);
+      window.localStorage.removeItem(previewKey);
+    } catch (error) {
+      console.error("班画面プレビューの読み込みに失敗しました:", error);
+    }
+  }, []);
+
   // --- Google Maps スクリプトのロード ---
   useEffect(() => {
     if (!GOOGLE_MAPS_API_KEY) {
@@ -559,10 +580,22 @@ export default function App() {
   };
 
   const openGroupAsStudentView = (group) => {
-    setGroupInfo({ number: group.groupNumber, pin: group.pin || '' });
-    setDaysData(group.daysData?.length ? group.daysData : initialDaysData);
-    setCurrentDayId(adminViewDay);
-    setIsAdminMode(false);
+    const previewKey = `trip-supporter-preview-${Date.now()}-${group.groupNumber}`;
+    window.localStorage.setItem(previewKey, JSON.stringify({
+      groupNumber: group.groupNumber,
+      pin: group.pin || '',
+      daysData: group.daysData?.length ? group.daysData : initialDaysData,
+      dayId: adminViewDay,
+    }));
+
+    const previewUrl = `${window.location.origin}${window.location.pathname}?teacherPreview=${encodeURIComponent(previewKey)}`;
+    const opened = window.open(previewUrl, '_blank');
+    if (!opened) {
+      setMessageBox({
+        title: "別ウィンドウを開けませんでした",
+        content: "ブラウザのポップアップブロックを解除して、もう一度「別窓表示」を押してください。"
+      });
+    }
   };
 
   const exportTimelineToSheet = async () => {
@@ -1028,7 +1061,7 @@ export default function App() {
                           onClick={() => openGroupAsStudentView(group)}
                           className="rounded bg-white px-2 py-1 text-xs font-medium text-blue-700 border border-blue-200 hover:bg-blue-100"
                         >
-                          班画面表示
+                          別窓表示
                         </button>
                         <button
                           type="button"
