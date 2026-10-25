@@ -78,3 +78,7 @@
 - スプレッドシートの構造。
 - Google Cloud Console 側の API 設定。
 - 班番号、PIN、2 日目/3 日目という基本運用。
+
+## 2026-10-24 依存更新（draft・本番未反映）
+
+Viteを7.3.2から同系列の修正版7.3.7へ更新しました。Node22.23.4とNode24対応Actionsへ変更し、PRはビルドのみでPagesをdeployしません。 詳細な検証範囲と残件は [依存更新の記録](DEPENDENCY-UPDATE-2026-10-24.md) を参照。
