@@ -932,7 +932,7 @@ export default function App() {
         <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-slate-800 mb-2">観光ルート作成アプリ</h1>
-            <p className="text-slate-500">班の情報を入力して始めてください</p>
+
           </div>
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
